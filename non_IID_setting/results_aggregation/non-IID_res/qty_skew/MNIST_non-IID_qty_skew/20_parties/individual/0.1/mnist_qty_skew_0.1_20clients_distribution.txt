@@ -1,0 +1,20 @@
+client : 0, samples : 267 / 60000, percentage : 0.00445
+client : 1, samples : 3370 / 60000, percentage : 0.05616666666666666
+client : 2, samples : 549 / 60000, percentage : 0.00915
+client : 3, samples : 17 / 60000, percentage : 0.00028333333333333335
+client : 4, samples : 6233 / 60000, percentage : 0.10388333333333333
+client : 5, samples : 17940 / 60000, percentage : 0.299
+client : 6, samples : 69 / 60000, percentage : 0.00115
+client : 7, samples : 266 / 60000, percentage :0.004433333333333333
+client : 8, samples : 170 / 60000, percentage : 0.0028333333333333335
+client : 9, samples : 901 / 60000, percentage : 0.015016666666666666
+client : 10, samples : 19346 / 60000, percentage : 0.32243333333333335
+client : 11, samples : 284 / 60000, percentage : 0.004733333333333333
+client : 12, samples : 35 / 60000, percentage : 0.0005833333333333334
+client : 13, samples : 142 / 60000, percentage : 0.0023666666666666667
+client : 14, samples : 14 / 60000, percentage : 0.00023333333333333333
+client : 15, samples : 8097 / 60000, percentage : 0.13495
+client : 16, samples : 1620 / 60000, percentage : 0.027
+client : 17, samples : 613 / 60000, percentage : 0.010216666666666667
+client : 18, samples : 24 / 60000, percentage : 0.0004
+client : 19, samples : 43 / 60000, percentage : 0.0007166666666666667

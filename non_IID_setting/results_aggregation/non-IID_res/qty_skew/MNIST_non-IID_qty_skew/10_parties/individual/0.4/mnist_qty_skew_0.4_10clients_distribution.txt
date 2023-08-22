@@ -1,0 +1,10 @@
+client : 0, samples : 260 / 60000, percentage : 0.004333333
+client : 1, samples : 360 / 60000, percentage : 0.006
+client : 2, samples : 1168 / 60000, percentage : 0.019466667
+client : 3, samples : 19 / 60000, percentage : 0.000316667
+client : 4, samples : 39216 / 60000, percentage : 0.6536
+client : 5, samples : 2353 / 60000, percentage : 0.039216667
+client : 6, samples : 7855 / 60000, percentage : 0.130916667
+client : 7, samples : 68 / 60000, percentage : 0.001133333
+client : 8, samples : 5303 / 60000, percentage : 0.088383333
+client : 9, samples : 3398 / 60000, percentage : 0.056633333

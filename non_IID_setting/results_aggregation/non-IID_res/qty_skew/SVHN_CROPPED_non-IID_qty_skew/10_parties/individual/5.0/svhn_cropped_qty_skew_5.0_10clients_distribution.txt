@@ -1,0 +1,10 @@
+client : 0, samples : 4812 / 73257, percentage : 0.06568655555100536
+client : 1, samples : 11131 / 73257, percentage : 0.15194452407278486
+client : 2, samples : 7417 / 73257, percentage : 0.101246297282171
+client : 3, samples : 8326 / 73257, percentage : 0.11365466781331476
+client : 4, samples : 6082 / 73257, percentage : 0.0830227828057387
+client : 5, samples : 7008 / 73257, percentage : 0.09566321307178836
+client : 6, samples : 10019 / 73257, percentage : 0.13676508729541204
+client : 7, samples : 2256 / 73257, percentage : 0.030795691879274334
+client : 8, samples : 9045 / 73257, percentage : 0.12346942954256931
+client : 9, samples : 7161 / 73257, percentage : 0.09775175068594127
