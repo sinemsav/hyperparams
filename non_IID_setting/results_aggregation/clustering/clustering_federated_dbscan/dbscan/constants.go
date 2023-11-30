@@ -19,6 +19,8 @@ const (
 	ENC_ACC         = 3
 	ENC_LR          = 4
 	ENC_MOM         = 5
+
+	ENC_CONCAT = 6 // TODO: use only packed version, remove acc/lr/mom
 )
 
 // For param (un)scaling.

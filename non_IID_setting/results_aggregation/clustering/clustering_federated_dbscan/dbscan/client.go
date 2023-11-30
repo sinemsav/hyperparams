@@ -28,7 +28,7 @@ type Client struct {
 	NumClusters           int
 	localAggregatedParams *GridData
 
-	sortedIdxMapping []int // Indices that map localAggregatedParams values based on sorting criteria
+	SortedIdxMapping []int // Indices that map localAggregatedParams values based on sorting criteria
 
 	// Best params (collectively)
 	NumBestParams    int
@@ -37,6 +37,14 @@ type Client struct {
 	// Rescaled params
 	rescaledLRs  *mat.VecDense
 	rescaledMOMs *mat.VecDense
+}
+
+func (client *Client) LocalAggregatedParams() *GridData {
+	return client.localAggregatedParams
+}
+
+func (client *Client) Grid() *mat.Dense {
+	return client.grid
 }
 
 type EncryptionParams struct {
@@ -59,6 +67,26 @@ type GridData struct {
 	lrGrid          *mat.VecDense
 	momGrid         *mat.VecDense
 	bsGrid          *mat.VecDense
+}
+
+func (g GridData) AccGrid() *mat.VecDense {
+	return g.accGrid
+}
+
+func (g GridData) ClusterSizeGrid() *mat.VecDense {
+	return g.clusterSizeGrid
+}
+
+func (g GridData) LrGrid() *mat.VecDense {
+	return g.lrGrid
+}
+
+func (g GridData) MomGrid() *mat.VecDense {
+	return g.momGrid
+}
+
+func (g GridData) BsGrid() *mat.VecDense {
+	return g.bsGrid
 }
 
 // CreateLocalGrid creates a local grid that represents the number of data points inside each cell of the grid.
@@ -186,12 +214,15 @@ func (client *Client) RemoveOutliers(denseMask *mat.Dense) {
 
 // GenerateKeyPair generates the secret and public key given a set of CKKS parameters.
 func (client *Client) GenerateKeyPair(params ckks.Parameters) {
+	//start := time.Now()
 	if client.MHEParams == nil {
 		client.MHEParams = &EncryptionParams{}
 	}
 
 	kgen := ckks.NewKeyGenerator(params)
 	client.MHEParams.SecKey, client.MHEParams.PubKey = kgen.GenKeyPair()
+	//elapsed := time.Since(start)
+	//log.Printf("GenerateKeyPair took %s for client %d", elapsed, client.ID)
 }
 
 // PrepareInput prepares the input used for collectively computing the dense mask and average (accuracy, lr, mom) values.
@@ -206,6 +237,39 @@ func (client *Client) PrepareInput(input int) {
 
 	var params, localClusterSizes *mat.VecDense
 
+	// TODO: only packed version should be used!
+	if input == ENC_CONCAT {
+		params = mat.VecDenseCopyOf(client.localAggregatedParams.accGrid)
+		localClusterSizes = mat.VecDenseCopyOf(client.localAggregatedParams.clusterSizeGrid)
+		params.ScaleVec(SCALEGRID, params)
+		localClusterSizes.ScaleVec(SCALEGRID, localClusterSizes)
+		acc := params.RawVector().Data
+
+		params = mat.VecDenseCopyOf(client.localAggregatedParams.lrGrid)
+		params.ScaleVec(SCALEGRID, params)
+		lr := params.RawVector().Data
+
+		for _, x := range lr {
+			acc = append(acc, x)
+		}
+
+		params = mat.VecDenseCopyOf(client.localAggregatedParams.momGrid)
+		params.ScaleVec(SCALEGRID, params)
+		mom := params.RawVector().Data
+
+		for _, x := range mom {
+			acc = append(acc, x)
+		}
+
+		duplicate := append([]float64{}, localClusterSizes.RawVector().Data...)
+		duplicate = append(duplicate, localClusterSizes.RawVector().Data...)
+		duplicate = append(duplicate, localClusterSizes.RawVector().Data...)
+
+		client.MHEParams.InputOne = acc
+		client.MHEParams.InputTwo = duplicate
+		return
+	}
+
 	switch input {
 	case ENC_DENSE:
 		var scaledMatrix mat.Dense
@@ -216,12 +280,12 @@ func (client *Client) PrepareInput(input int) {
 		params = mat.VecDenseCopyOf(client.localAggregatedParams.accGrid)
 		localClusterSizes = mat.VecDenseCopyOf(client.localAggregatedParams.clusterSizeGrid)
 	case ENC_LR:
-		sortedLRs := ExtractVecElements(client.localAggregatedParams.lrGrid, client.sortedIdxMapping[:client.NumBestParams])
-		localClusterSizes = ExtractVecElements(client.localAggregatedParams.clusterSizeGrid, client.sortedIdxMapping[:client.NumBestParams])
+		sortedLRs := ExtractVecElements(client.localAggregatedParams.lrGrid, client.SortedIdxMapping[:client.NumBestParams])
+		localClusterSizes = ExtractVecElements(client.localAggregatedParams.clusterSizeGrid, client.SortedIdxMapping[:client.NumBestParams])
 		params = mat.VecDenseCopyOf(sortedLRs)
 	case ENC_MOM:
-		sortedMOMs := ExtractVecElements(client.localAggregatedParams.momGrid, client.sortedIdxMapping[:client.NumBestParams])
-		localClusterSizes = ExtractVecElements(client.localAggregatedParams.clusterSizeGrid, client.sortedIdxMapping[:client.NumBestParams])
+		sortedMOMs := ExtractVecElements(client.localAggregatedParams.momGrid, client.SortedIdxMapping[:client.NumBestParams])
+		localClusterSizes = ExtractVecElements(client.localAggregatedParams.clusterSizeGrid, client.SortedIdxMapping[:client.NumBestParams])
 		params = mat.VecDenseCopyOf(sortedMOMs)
 	}
 
@@ -249,7 +313,7 @@ func (client *Client) SaveBestAcc(accuracies []float64, numBestParams int) (*mat
 		client.globalBestParams = &GridData{}
 	}
 	client.globalBestParams.accGrid = mat.NewVecDense(avgAcc.Len(), avgAcc.RawVector().Data)
-	client.sortedIdxMapping = idxs
+	client.SortedIdxMapping = idxs
 
 	//fmt.Println("Avg ACC final:")
 	//printVec(c.bestAccs)
@@ -260,7 +324,7 @@ func (client *Client) SaveBestAcc(accuracies []float64, numBestParams int) (*mat
 	}
 	client.NumBestParams = numBestParams
 
-	return client.globalBestParams.accGrid, client.sortedIdxMapping
+	return client.globalBestParams.accGrid, client.SortedIdxMapping
 }
 
 // SaveBestClusterSize sorts the given clusterSize vector according to the given indices mapping
@@ -269,10 +333,18 @@ func (client *Client) SaveBestClusterSize(clusterSize *mat.VecDense, numBestPara
 	if numBestParams > clusterSize.Len() {
 		numBestParams = clusterSize.Len()
 	}
-	client.globalBestParams.clusterSizeGrid = ExtractVecElements(clusterSize, client.sortedIdxMapping[:numBestParams])
+	client.globalBestParams.clusterSizeGrid = ExtractVecElements(clusterSize, client.SortedIdxMapping[:numBestParams])
 	client.NumBestParams = numBestParams
 
 	return client.globalBestParams.clusterSizeGrid
+}
+
+func (client *Client) GetClusterSizes() *mat.VecDense {
+	return client.globalBestParams.clusterSizeGrid
+}
+
+func (client *Client) GetIdxMapping() []int {
+	return client.SortedIdxMapping
 }
 
 // SaveBestLrAndMom saves the given LR and MOM vectors as best ones.

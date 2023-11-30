@@ -8,6 +8,7 @@ import (
 	"github.com/tuneinsight/lattigo/v4/utils"
 	"log"
 	"os"
+	"time"
 )
 
 // AvgEncrypted is used to compute average of clients params (acc/lr/mom) under encryption.
@@ -30,26 +31,49 @@ func AvgEncrypted(clients []*dbscan.Client, inputType int) []float64 {
 		panic(err)
 	}
 
+	start := time.Now()
 	pk := ckgPhase(params, crs, clients)
+	elapsed := time.Since(start)
+	log.Printf("CKG-PHASE took %s", elapsed)
+
+	start = time.Now()
 	rlk := rkgPhase(params, crs, clients)
+	elapsed = time.Since(start)
+	log.Printf("RKG-PHASE took %s", elapsed)
 
 	// Encoding
+	start = time.Now()
 	encoder := ckks.NewEncoder(params)
+	elapsed = time.Since(start)
+	log.Printf("ENCoder-PHASE took %s", elapsed)
+
+	start = time.Now()
 	encInputsAcc, encInputsNum := encPhaseAVG(params, clients, pk, encoder)
+	elapsed = time.Since(start)
+	log.Printf("ENC-PHASE took %s", elapsed)
 
 	// Evaluation
+	start = time.Now()
 	evaluator := ckks.NewEvaluator(params, rlwe.EvaluationKey{Rlk: rlk, Rtks: nil})
 	encResAcc := evalPhase(params, encInputsAcc, evaluator)
 	encResNum := evalPhase(params, encInputsNum, evaluator)
+	elapsed = time.Since(start)
+	log.Printf("EVAL-PHASE-avg-add took %s", elapsed)
 
 	// Inverse
+	start = time.Now()
 	encRes, err := evaluator.InverseNew(encResNum, 7)
 	if err != nil {
 		panic(err)
 	}
+	elapsed = time.Since(start)
+	log.Printf("EVAL-PHASE-avg-inverse took %s", elapsed)
 
 	// Multiplication
+	start = time.Now()
 	encRes = evaluator.MulRelinNew(encRes, encResAcc)
+	elapsed = time.Since(start)
+	log.Printf("EVAL-PHASE-mul took %s", elapsed)
 
 	// Target private and public keys
 	kgen := ckks.NewKeyGenerator(params)
@@ -61,13 +85,22 @@ func AvgEncrypted(clients []*dbscan.Client, inputType int) []float64 {
 	}
 
 	// Prepare for decryption via tsk (key switch to tpk)
+	start = time.Now()
 	encOutRes := pcksPhase(params, tpk, encRes, clients)
+	elapsed = time.Since(start)
+	log.Printf("pcks-PHASE took %s", elapsed)
 
 	// Decrypt the result with the target secret key
+	start = time.Now()
 	pt := dtb.Decryptor.DecryptNew(encOutRes)
+	elapsed = time.Since(start)
+	log.Printf("decrypt-PHASE took %s", elapsed)
 
 	// Decode
+	start = time.Now()
 	res := encoder.Decode(pt, params.LogSlots())
+	elapsed = time.Since(start)
+	log.Printf("decode-PHASE took %s", elapsed)
 
 	return dbscan.ComplexArrayToFloatArray(res, uint(dbscan.GRIDROWS*dbscan.GRIDCOLS))
 }
@@ -96,8 +129,11 @@ func encPhaseAVG(params ckks.Parameters, clients []*dbscan.Client, pk *rlwe.Publ
 		encryptor.Encrypt(pt1, encInputs1[i])
 		encryptor.Encrypt(pt2, encInputs2[i])
 	}
-
+	bin1 := encInputs1[0].MarshalBinarySize()
+	bin2 := encInputs2[0].MarshalBinarySize()
+	l.Printf("[communication] client sending 2encrypted CipherText of %d bytes, %d bytes... logN %d", bin1, bin2, params.ParametersLiteral().LogN)
+	
 	l.Printf("\tdone encrypt")
-
+	
 	return
 }
