@@ -10,7 +10,6 @@ import (
 	"log"
 	"math"
 	"os"
-	"time"
 )
 
 // AggregateGrid aggregates the encrypted grids from clients and optionally performs comparison under encryption.
@@ -38,31 +37,19 @@ func AggregateGrid(clients []*dbscan.Client, inputType int, withComparison, dumm
 		panic(err)
 	}
 
-	start := time.Now()
 	// 1) Collective public key generation
 	pk := ckgPhase(params, crs, clients)
-	elapsed := time.Since(start)
-	log.Printf("CKG-PHASE took %s", elapsed)
 
-	start = time.Now()
 	// 2) Collective relinearization key generation
 	rlk := rkgPhase(params, crs, clients)
-	elapsed = time.Since(start)
-	log.Printf("RKG-PHASE took %s", elapsed)
 
 	// Encoder
-	start = time.Now()
 	encoder := ckks.NewEncoder(params)
 	encInputs, encryptor := encPhase(params, clients, pk, encoder)
-	elapsed = time.Since(start)
-	log.Printf("ENC-PHASE took %s", elapsed)
 
 	// Evaluator
-	start = time.Now()
 	evaluator := ckks.NewEvaluator(params, rlwe.EvaluationKey{Rlk: rlk, Rtks: nil})
 	encRes := evalPhase(params, encInputs, evaluator)
-	elapsed = time.Since(start)
-	log.Printf("EVAL-PHASE took %s", elapsed)
 
 	if !dummyBootstrapping {
 		// Encryptor + Decryptor + Encoder
@@ -81,8 +68,6 @@ func AggregateGrid(clients []*dbscan.Client, inputType int, withComparison, dumm
 
 		RefreshParties := make([]*comparator.Party, len(clients))
 		for i, client := range clients {
-			//start = time.Now()
-
 			p := new(comparator.Party)
 			if i == 0 {
 				p.RefreshProtocol = dckks.NewRefreshProtocol(params, dtb.LogBound, 3.2)
@@ -93,18 +78,12 @@ func AggregateGrid(clients []*dbscan.Client, inputType int, withComparison, dumm
 			p.SK = client.MHEParams.SecKey
 			p.Share = p.AllocateShare(dtb.MinLevel, params.MaxLevel())
 			RefreshParties[i] = p
-
-			//elapsed = time.Since(start)
-			//log.Printf("RefreshProtocol-PHASE took %s for client %d", elapsed, client.ID)
 		}
 		dtb.BootstrappingParties = RefreshParties
 
 		// Threshold Comparison
 		if withComparison {
-			start = time.Now()
 			encRes = thresholdComparison(encRes, params, dtb)
-			elapsed = time.Since(start)
-			log.Printf("COMPARISON-PHASE took %s", elapsed)
 		}
 	}
 
@@ -113,10 +92,7 @@ func AggregateGrid(clients []*dbscan.Client, inputType int, withComparison, dumm
 	tsk, tpk := kgen.GenKeyPair()
 
 	// Prepare for decryption via tsk
-	start = time.Now()
 	encOut := pcksPhase(params, tpk, encRes, clients) // clients[0].MHEParams.pk
-	elapsed = time.Since(start)
-	log.Printf("pcks-PHASE took %s", elapsed)
 
 	if dummyBootstrapping {
 		// Relinearization + rotation keys
@@ -138,19 +114,12 @@ func AggregateGrid(clients []*dbscan.Client, inputType int, withComparison, dumm
 	}
 
 	// Decrypt the result with the target secret key
-	start = time.Now()
 	decryptor := ckks.NewDecryptor(params, tsk)
 	//log.Println("> Result:")
 	ptres := ckks.NewPlaintext(params, params.MaxLevel())
 	decryptor.Decrypt(encOut, ptres)
-	elapsed = time.Since(start)
-	log.Printf("decrypt-PHASE took %s", elapsed)
 
-	start = time.Now()
 	res := encoder.Decode(ptres, params.LogSlots())
-	elapsed = time.Since(start)
-	log.Printf("decode-PHASE took %s", elapsed)
-	//log.Println("Decrypted values CKKS: \n ", complexArrayToFloatArray(res, uint(GRIDROWS*GRIDCOLS)))
 
 	return dbscan.ComplexArrayToFloatArray(res, uint(dbscan.GRIDROWS*dbscan.GRIDCOLS))
 }
@@ -199,8 +168,6 @@ func ckgPhase(params ckks.Parameters, crs utils.PRNG, clients []*dbscan.Client) 
 	}
 	ckg.GenPublicKey(ckgCombined, crp, pk)
 
-	//l.Printf("\tdone\n")
-
 	return pk
 }
 
@@ -237,8 +204,6 @@ func rkgPhase(params ckks.Parameters, crs utils.PRNG, clients []*dbscan.Client) 
 	}
 	rkg.GenRelinearizationKey(rkgCombined1, rkgCombined2, rlk)
 
-	//l.Printf("\tdone 2\n")
-
 	return rlk
 }
 
@@ -260,10 +225,6 @@ func encPhase(params ckks.Parameters, clients []*dbscan.Client, pk *rlwe.PublicK
 		encoder.Encode(client.MHEParams.InputOne, pt, params.LogSlots())
 		encryptor.Encrypt(pt, encInputs[i])
 	}
-	bin1 := encInputs[0].MarshalBinarySize()
-	l.Printf("[communication] client sending 1encrypted Ciphertext of %d bytes... logN %d", bin1, params.ParametersLiteral().LogN)
-
-	//l.Printf("\tdone encrypt")
 
 	return
 }
@@ -292,7 +253,6 @@ func evalPhase(params ckks.Parameters, encInputs []*rlwe.Ciphertext, evaluator c
 		}
 	}
 
-	//l.Println("> done eval")
 	return
 }
 
@@ -319,8 +279,6 @@ func pcksPhase(params ckks.Parameters, tpk *rlwe.PublicKey, encRes *rlwe.Ciphert
 		pcks.AggregateShares(client.MHEParams.PCKSShare, pcksCombined, pcksCombined)
 	}
 	pcks.KeySwitch(encRes, pcksCombined, encOut)
-
-	//l.Printf("\tdone pcks\n")
 
 	return
 }

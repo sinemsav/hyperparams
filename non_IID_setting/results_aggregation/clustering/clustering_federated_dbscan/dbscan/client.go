@@ -7,6 +7,7 @@ import (
 	"github.com/tuneinsight/lattigo/v4/rlwe"
 	"gonum.org/v1/gonum/floats"
 	"gonum.org/v1/gonum/mat"
+	"os"
 )
 
 type Parameters struct {
@@ -235,68 +236,54 @@ func (client *Client) PrepareInput(input int) {
 		return
 	}
 
-	var params, localClusterSizes *mat.VecDense
-
-	// TODO: only packed version should be used!
-	if input == ENC_CONCAT {
-		params = mat.VecDenseCopyOf(client.localAggregatedParams.accGrid)
-		localClusterSizes = mat.VecDenseCopyOf(client.localAggregatedParams.clusterSizeGrid)
-		params.ScaleVec(SCALEGRID, params)
-		localClusterSizes.ScaleVec(SCALEGRID, localClusterSizes)
-		acc := params.RawVector().Data
-
-		params = mat.VecDenseCopyOf(client.localAggregatedParams.lrGrid)
-		params.ScaleVec(SCALEGRID, params)
-		lr := params.RawVector().Data
-
-		for _, x := range lr {
-			acc = append(acc, x)
-		}
-
-		params = mat.VecDenseCopyOf(client.localAggregatedParams.momGrid)
-		params.ScaleVec(SCALEGRID, params)
-		mom := params.RawVector().Data
-
-		for _, x := range mom {
-			acc = append(acc, x)
-		}
-
-		duplicate := append([]float64{}, localClusterSizes.RawVector().Data...)
-		duplicate = append(duplicate, localClusterSizes.RawVector().Data...)
-		duplicate = append(duplicate, localClusterSizes.RawVector().Data...)
-
-		client.MHEParams.InputOne = acc
-		client.MHEParams.InputTwo = duplicate
-		return
-	}
-
-	switch input {
-	case ENC_DENSE:
+	if input == ENC_DENSE {
 		var scaledMatrix mat.Dense
 		scaledMatrix.Scale(SCALEGRID, client.grid)
 		client.MHEParams.InputOne = scaledMatrix.RawMatrix().Data
 		return
-	case ENC_ACC:
-		params = mat.VecDenseCopyOf(client.localAggregatedParams.accGrid)
-		localClusterSizes = mat.VecDenseCopyOf(client.localAggregatedParams.clusterSizeGrid)
-	case ENC_LR:
-		sortedLRs := ExtractVecElements(client.localAggregatedParams.lrGrid, client.SortedIdxMapping[:client.NumBestParams])
-		localClusterSizes = ExtractVecElements(client.localAggregatedParams.clusterSizeGrid, client.SortedIdxMapping[:client.NumBestParams])
-		params = mat.VecDenseCopyOf(sortedLRs)
-	case ENC_MOM:
-		sortedMOMs := ExtractVecElements(client.localAggregatedParams.momGrid, client.SortedIdxMapping[:client.NumBestParams])
-		localClusterSizes = ExtractVecElements(client.localAggregatedParams.clusterSizeGrid, client.SortedIdxMapping[:client.NumBestParams])
-		params = mat.VecDenseCopyOf(sortedMOMs)
 	}
 
-	params.ScaleVec(SCALEGRID, params)
-	localClusterSizes.ScaleVec(SCALEGRID, localClusterSizes)
+	if input != ENC_COMPACT_ACC_LR_MOM {
+		println("Error not supported value for PrepareInput function, try again.")
+		os.Exit(1)
+	}
+	var params, localClusterSizes *mat.VecDense
 
-	client.MHEParams.InputOne = params.RawVector().Data
-	client.MHEParams.InputTwo = localClusterSizes.RawVector().Data
+	// Prepare Accuracy.
+	params = mat.VecDenseCopyOf(client.localAggregatedParams.accGrid)
+	params.ScaleVec(SCALEGRID, params)
+	acc := params.RawVector().Data
+
+	// Prepare LearningRate and append to Accuracy.
+	params = mat.VecDenseCopyOf(client.localAggregatedParams.lrGrid)
+	params.ScaleVec(SCALEGRID, params)
+	lr := params.RawVector().Data
+	for _, x := range lr {
+		acc = append(acc, x)
+	}
+
+	// Prepare Momentum and append to Accuracy.
+	params = mat.VecDenseCopyOf(client.localAggregatedParams.momGrid)
+	params.ScaleVec(SCALEGRID, params)
+	mom := params.RawVector().Data
+	for _, x := range mom {
+		acc = append(acc, x)
+	}
+
+	// Prepare ClusterSizes.
+	localClusterSizes = mat.VecDenseCopyOf(client.localAggregatedParams.clusterSizeGrid)
+	localClusterSizes.ScaleVec(SCALEGRID, localClusterSizes)
+	duplicateClusterSizes := append([]float64{}, localClusterSizes.RawVector().Data...)
+	duplicateClusterSizes = append(duplicateClusterSizes, localClusterSizes.RawVector().Data...)
+	duplicateClusterSizes = append(duplicateClusterSizes, localClusterSizes.RawVector().Data...)
+
+	client.MHEParams.InputOne = acc
+	client.MHEParams.InputTwo = duplicateClusterSizes
+
+	return
 }
 
-// SaveBestAcc saves the best accuracies and creates an indices array to map the given accuracies array to the best accuracies array.
+// SaveBestAcc extracts+saves the best accuracies and creates an indices array to map the given accuracies array to the best accuracies array.
 // The best accuracies array is restricted with the top numBestParams values.
 func (client *Client) SaveBestAcc(accuracies []float64, numBestParams int) (*mat.VecDense, []int) {
 	// Deep copy the given slice/array into a vector.
