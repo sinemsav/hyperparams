@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"gonum.org/v1/gonum/mat"
 	"log"
-	"time"
 )
 
 func main() {
@@ -27,10 +26,7 @@ func main() {
 	}
 
 	// [MHE] Get DenseCell Mask
-	start := time.Now()
 	denseMaskHE := GetDenseCellMask(clients)
-	elapsed := time.Since(start)
-	fmt.Println("dense single took: ", elapsed)
 
 	// [locally] Use denseMask to remove noise and group points/params for clustering
 	for _, client := range clients {
@@ -38,8 +34,8 @@ func main() {
 		client.CreateClusterParams(denseMaskHE)
 	}
 
-	// [MHE] Calculate average ACC, LR and MOM.
-	ComputeAverages(clients)
+	// [MHE] Calculate average ACC, LR and MOM and save best params.
+	SaveBestAverages(clients)
 
 	// [locally] Reverse the scaling of hps
 	for _, client := range clients {
@@ -64,14 +60,15 @@ func GetDenseCellMask(clients []*dbscan.Client) *mat.Dense {
 	return denseMaskHE
 }
 
-// ComputeAverages computes average accuracy, learning rate and momentum values in grid by using MHE.
-func ComputeAverages(clients []*dbscan.Client) {
+// SaveBestAverages computes and saves best average accuracy, learning rate and momentum values in grid by using MHE.
+func SaveBestAverages(clients []*dbscan.Client) {
 	totalNumClusters := clients[0].NumClusters
 	numBestParams := 3
 
 	avgAccLrMomHE := encrypted.AvgEncrypted(clients, dbscan.ENC_COMPACT_ACC_LR_MOM)[:(totalNumClusters * 3)] // extend 3 times - for: Acc, LR, Mom
 	fmt.Println(avgAccLrMomHE)
 
+	// Save best results.
 	for _, client := range clients {
 		client.SaveBestAcc(avgAccLrMomHE[:(totalNumClusters)], numBestParams)
 

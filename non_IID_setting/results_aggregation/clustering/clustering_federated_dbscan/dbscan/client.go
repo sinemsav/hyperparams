@@ -40,10 +40,6 @@ type Client struct {
 	rescaledMOMs *mat.VecDense
 }
 
-func (client *Client) LocalAggregatedParams() *GridData {
-	return client.localAggregatedParams
-}
-
 func (client *Client) Grid() *mat.Dense {
 	return client.grid
 }
@@ -68,26 +64,6 @@ type GridData struct {
 	lrGrid          *mat.VecDense
 	momGrid         *mat.VecDense
 	bsGrid          *mat.VecDense
-}
-
-func (g GridData) AccGrid() *mat.VecDense {
-	return g.accGrid
-}
-
-func (g GridData) ClusterSizeGrid() *mat.VecDense {
-	return g.clusterSizeGrid
-}
-
-func (g GridData) LrGrid() *mat.VecDense {
-	return g.lrGrid
-}
-
-func (g GridData) MomGrid() *mat.VecDense {
-	return g.momGrid
-}
-
-func (g GridData) BsGrid() *mat.VecDense {
-	return g.bsGrid
 }
 
 // CreateLocalGrid creates a local grid that represents the number of data points inside each cell of the grid.
@@ -324,14 +300,6 @@ func (client *Client) SaveBestClusterSize(clusterSize *mat.VecDense, numBestPara
 	client.NumBestParams = numBestParams
 
 	return client.globalBestParams.clusterSizeGrid
-}
-
-func (client *Client) GetClusterSizes() *mat.VecDense {
-	return client.globalBestParams.clusterSizeGrid
-}
-
-func (client *Client) GetIdxMapping() []int {
-	return client.SortedIdxMapping
 }
 
 // SaveBestLrAndMom saves the given LR and MOM vectors as best ones.
