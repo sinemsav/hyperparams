@@ -1,4 +1,4 @@
-module clustering_federated_dbscan
+module encrypted_dbscan
 
 go 1.20
 

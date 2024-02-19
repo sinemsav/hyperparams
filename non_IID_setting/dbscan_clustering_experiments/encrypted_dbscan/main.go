@@ -1,8 +1,8 @@
 package main
 
 import (
-	"clustering_federated_dbscan/dbscan"
-	"clustering_federated_dbscan/encrypted"
+	"encrypted_dbscan/dbscan"
+	"encrypted_dbscan/encrypted"
 	"fmt"
 	"gonum.org/v1/gonum/mat"
 	"log"

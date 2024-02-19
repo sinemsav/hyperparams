@@ -1,6 +1,6 @@
 # DBSCAN-based FL-HPO in Non-IID Setting
 
-This folder contains the code for DBSCAN-based FL-HPO: finding good global hyperparameters by leveraging local HPOs. Moreover, DBSCAN-based FL-HPO can also be performed under encryption which is demonstrated in the [`clustering_federated_dbscan`](./clustering_federated_dbscan) directory.
+This folder contains the code for DBSCAN-based FL-HPO: finding good global hyperparameters by leveraging local HPOs. Moreover, DBSCAN-based FL-HPO can also be performed under encryption which is demonstrated in the [`encrypted_dbscan`](./encrypted_dbscan) directory.
 
 ## Experiments
 The experiments used during the project can be found in [`experiments.zip`](./experiments.zip). The zip-file includes both the original experiments, as well as the extended version after running additional local HPOs for CIFAR-10 dataset with quantity skew and batch size = 8.

@@ -1,8 +1,8 @@
 package encrypted
 
 import (
-	"clustering_federated_dbscan/comparator"
-	"clustering_federated_dbscan/dbscan"
+	"encrypted_dbscan/comparator"
+	"encrypted_dbscan/dbscan"
 	"github.com/tuneinsight/lattigo/v4/ckks"
 	"github.com/tuneinsight/lattigo/v4/dckks"
 	"github.com/tuneinsight/lattigo/v4/rlwe"
