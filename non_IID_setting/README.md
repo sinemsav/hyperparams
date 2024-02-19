@@ -1,6 +1,6 @@
 # Non-IID Scripts
 
-The Non-IID scripts contain experiments in a federated setting (with clients collaboratively training a joint model). For experiments with clustering algorithms (DBSCAN-based FL-HPO) and privacy preserving clustering please refer to [`clustering_experiments`](./clustering_experiments/).
+The Non-IID scripts contain experiments in a federated setting (with clients collaboratively training a joint model).
 
 ## Cluster setup
 
