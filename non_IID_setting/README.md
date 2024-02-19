@@ -180,3 +180,7 @@ Choose the `DATASETS`, `SKEWS` and `NR_PARTIES` in `constants.py` and run the no
 ## Heuristic
 
 For more details on the development of the heuristic functions, check out the README file inside the `heuristic/` folder.
+
+## Clustering Experiments
+
+For more details on experiments and results with clustering algorithms (DBSCAN-based FL-HPO) and privacy preserving clustering please refer to the README file inside the [`clustering_experiments`](./clustering_experiments/) directory.
