@@ -2,7 +2,7 @@
 
 Implementation: Sinem Sav, Natalija Mitic, Simon Perriard Nicolas, and Xavier Oliva Jürgens
 
-This repository contains code accompanying the paper titled _**PrivTuna Efficient Hyperparameter Tuning for Privacy-Preserving Federated Learning**_. The paper addresses the challenge of privacy-preserving hyperparameter (HP) tuning in cross-silo federated learning (FL). We conduct experiments using various datasets and model architectures, involving different numbers of clients and data distributions, with the aim of better understanding the relationship between the HPs discovered by each client and the server ones.
+This repository contains code accompanying the paper titled _**PrivTuna: Efficient Hyperparameter Tuning for Privacy-Preserving Federated Learning**_. The paper addresses the challenge of privacy-preserving hyperparameter (HP) tuning in cross-silo federated learning (FL). We conduct experiments using various datasets and model architectures, involving different numbers of clients and data distributions, with the aim of better understanding the relationship between the HPs discovered by each client and the server ones.
 
 ## Repository Structure
 
