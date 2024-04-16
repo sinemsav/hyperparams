@@ -1,3 +1,5 @@
+[![arxiv](https://img.shields.io/badge/arXiv-2402.16087-b31b1b.svg)](https://arxiv.org/abs/2402.16087)
+
 # Federated Hyperparameter Tuning
 
 Implementation: Sinem Sav, Natalija Mitic, Simon Perriard Nicolas, and Xavier Oliva Jürgens
