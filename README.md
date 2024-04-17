@@ -1,10 +1,10 @@
-[![arxiv](https://img.shields.io/badge/arXiv-2402.16087-b31b1b.svg)](https://arxiv.org/abs/2402.16087)
+
 
 # Federated Hyperparameter Tuning
 
 Implementation: Sinem Sav, Natalija Mitic, Simon Perriard Nicolas, and Xavier Oliva Jürgens
 
-This repository contains code accompanying the paper titled _**How to Privately Tune Hyperparameters in Federated Learning? Insights from a Benchmark Study
+This repository contains code accompanying the paper titled _**Efficient and Privacy-Preserving Hyperparameter Tuning for Federated Learning
 **_. The paper addresses the challenge of privacy-preserving hyperparameter (HP) tuning in cross-silo federated learning (FL). We conduct experiments using various datasets and model architectures, involving different numbers of clients and data distributions, with the aim of better understanding the relationship between the HPs discovered by each client and the server ones.
 
 ## Repository Structure
